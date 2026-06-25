@@ -1,0 +1,492 @@
+<div class="security-scan-page">
+
+  <!-- ── PAGE HEADER ── -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="page-title">
+        <span class="title-shield">🛡</span>
+        <div>
+          <h1>Security <span class="title-accent">Scanner</span></h1>
+          <p class="page-subtitle">AI-powered vulnerability scanner for your entire GitHub repository</p>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <!-- GitHub connection badge -->
+      <div class="github-badge connected" *ngIf="githubStatus()?.connected">
+        <span class="gh-dot"></span>
+        <span class="gh-icon">⬡</span>
+        <span class="gh-name">{{ githubStatus()!.githubUsername }}</span>
+        <button class="gh-disconnect" (click)="disconnectGithub()" title="Disconnect GitHub">✕</button>
+      </div>
+      <div class="github-badge disconnected" *ngIf="!githubStatus()?.connected">
+        <span class="gh-dot off"></span>
+        GitHub not connected
+      </div>
+      <button class="btn-history" (click)="toggleHistory()">
+        ◎ {{ showHistory() ? 'Hide' : 'History' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── LANDING INFO (shown when no active scan and GitHub not connected) ── -->
+  <div class="landing-info" *ngIf="!currentScan() && !isConnected">
+
+    <!-- Hero -->
+    <div class="info-hero">
+      <div class="info-hero-content">
+        <div class="info-badge">Powered by Ollama Gemma 3 · OWASP Top 10 Aligned</div>
+        <h2 class="info-hero-title">
+          Find security vulnerabilities<br>
+          <span class="gradient-text">before attackers do</span>
+        </h2>
+        <p class="info-hero-sub">
+          Connect your GitHub account and paste a repo URL. CodeLens AI fetches up to 50 code files,
+          scans each one for real exploitable vulnerabilities, and delivers a structured security report
+          with CWE IDs, exploit scenarios, and concrete fixes.
+        </p>
+        <button class="btn-connect-hero" (click)="connectGithub()" [disabled]="isConnecting()">
+          <span *ngIf="!isConnecting()">⬡ Connect GitHub to Start Scanning</span>
+          <span *ngIf="isConnecting()" class="loading-text"><span class="spinner"></span> Redirecting...</span>
+        </button>
+        <p class="info-hero-note">
+          We request <code>repo</code> read scope only — we never modify your code.
+        </p>
+      </div>
+      <div class="info-hero-visual">
+        <div class="vuln-preview-card">
+          <div class="vpc-header">
+            <span class="vpc-dot red"></span><span class="vpc-dot yellow"></span><span class="vpc-dot green"></span>
+            <span class="vpc-title">UserService.java — Security Scan</span>
+          </div>
+          <div class="vpc-finding critical">
+            <span class="vpc-sev critical">CRITICAL</span>
+            <span class="vpc-cwe">CWE-89</span>
+            <span class="vpc-type">SQL_INJECTION</span>
+            <div class="vpc-desc">Line 42 — String-concatenated SQL query allows injection</div>
+          </div>
+          <div class="vpc-finding high">
+            <span class="vpc-sev high">HIGH</span>
+            <span class="vpc-cwe">CWE-798</span>
+            <span class="vpc-type">HARDCODED_SECRET</span>
+            <div class="vpc-desc">Line 8 — API key hardcoded in source file</div>
+          </div>
+          <div class="vpc-finding medium">
+            <span class="vpc-sev medium">MEDIUM</span>
+            <span class="vpc-cwe">CWE-287</span>
+            <span class="vpc-type">MISSING_AUTH_CHECK</span>
+            <div class="vpc-desc">Line 71 — Admin endpoint missing authorization check</div>
+          </div>
+          <div class="vpc-score-row">
+            <span class="vpc-risk-label">Risk Score</span>
+            <span class="vpc-risk-val critical">8.5 / 10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What it checks -->
+    <div class="info-section">
+      <div class="info-section-tag">Vulnerability Coverage</div>
+      <h3 class="info-section-title">What CodeLens AI scans for</h3>
+      <div class="vuln-types-grid">
+        <div class="vuln-type-card critical-border">
+          <span class="vt-sev critical">CRITICAL</span>
+          <div class="vt-list">
+            <div class="vt-item"><span class="vt-cwe">CWE-89</span> SQL Injection</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-78</span> Command Injection</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-798</span> Hardcoded Secrets</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-502</span> Insecure Deserialization</div>
+          </div>
+        </div>
+        <div class="vuln-type-card high-border">
+          <span class="vt-sev high">HIGH</span>
+          <div class="vt-list">
+            <div class="vt-item"><span class="vt-cwe">CWE-287</span> Broken Authentication</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-284</span> Broken Access Control</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-79</span> Cross-Site Scripting</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-918</span> SSRF</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-22</span> Path Traversal</div>
+          </div>
+        </div>
+        <div class="vuln-type-card medium-border">
+          <span class="vt-sev medium">MEDIUM</span>
+          <div class="vt-list">
+            <div class="vt-item"><span class="vt-cwe">CWE-732</span> Security Misconfiguration</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-200</span> Sensitive Data Exposure</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-327</span> Weak Cryptography</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-611</span> XXE Injection</div>
+          </div>
+        </div>
+        <div class="vuln-type-card low-border">
+          <span class="vt-sev low">LOW</span>
+          <div class="vt-list">
+            <div class="vt-item"><span class="vt-cwe">CWE-330</span> Insecure Randomness</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-200</span> Verbose Error Messages</div>
+            <div class="vt-item"><span class="vt-cwe">CWE-307</span> Missing Rate Limiting</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="info-section">
+      <div class="info-section-tag">Process</div>
+      <h3 class="info-section-title">How it works</h3>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-num">01</div>
+          <div class="how-content">
+            <div class="how-title">Connect GitHub</div>
+            <div class="how-desc">Authorize read-only access. We request the <code>repo</code> scope so we can read both public and private repositories.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">02</div>
+          <div class="how-content">
+            <div class="how-title">Paste Your Repo URL</div>
+            <div class="how-desc">Enter any GitHub repo URL — public or private. Up to 50 code files are selected automatically. Build artifacts, node_modules, and vendor directories are skipped.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">03</div>
+          <div class="how-content">
+            <div class="how-title">AI Scans File by File</div>
+            <div class="how-desc">Each code file is analyzed by Gemma for exploitable vulnerabilities. A real-time progress bar shows exactly which file is being scanned.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">04</div>
+          <div class="how-content">
+            <div class="how-title">Get Your Security Report</div>
+            <div class="how-desc">A full report with risk score, severity breakdown, CWE IDs, exploit scenarios, and code-level fixes — all grouped and filterable by severity.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy + limits -->
+    <div class="info-limits-row">
+      <div class="limit-card">
+        <span class="limit-icon">🔒</span>
+        <div>
+          <div class="limit-title">Privacy First</div>
+          <div class="limit-desc">We only read repo contents during the scan. Your code is never stored permanently. GitHub token encrypted at rest with AES-256-GCM.</div>
+        </div>
+      </div>
+      <div class="limit-card">
+        <span class="limit-icon">⚡</span>
+        <div>
+          <div class="limit-title">Up to 50 Files</div>
+          <div class="limit-desc">Each scan analyzes up to 50 code files. Binary files, build artifacts, and common dependency folders are excluded automatically.</div>
+        </div>
+      </div>
+      <div class="limit-card">
+        <span class="limit-icon">🌐</span>
+        <div>
+          <div class="limit-title">Public & Private Repos</div>
+          <div class="limit-desc">Both public and private GitHub repositories are supported. You can disconnect GitHub access at any time from this page.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCAN FORM (GitHub connected, no active scan) ── -->
+  <div class="scan-form-section" *ngIf="isConnected && !currentScan()">
+    <div class="scan-form-card">
+      <div class="scan-form-header">
+        <div class="sfh-left">
+          <h3 class="sfh-title">Scan a Repository</h3>
+          <p class="sfh-sub">Paste your GitHub repo URL below. Public and private repos supported.</p>
+        </div>
+        <div class="github-connected-pill">
+          <span class="gh-dot small"></span>
+          Connected as <strong>{{ githubStatus()?.githubUsername }}</strong>
+          <button class="gh-disconnect-sm" (click)="disconnectGithub()">Disconnect</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">GitHub Repository URL</label>
+        <input
+          class="repo-input"
+          type="url"
+          placeholder="https://github.com/owner/repository-name"
+          [value]="repoUrl()"
+          (input)="repoUrl.set($any($event.target).value)"
+          (keydown.enter)="startScan()" />
+      </div>
+
+      <div class="input-group optional">
+        <label class="input-label">Branch <span class="optional-tag">optional — defaults to main</span></label>
+        <input
+          class="repo-input sm"
+          type="text"
+          placeholder="main"
+          [value]="branch()"
+          (input)="branch.set($any($event.target).value)" />
+      </div>
+
+      <div class="error-banner" *ngIf="inputError()">
+        <span>⚠ {{ inputError() }}</span>
+        <button (click)="inputError.set(null)">✕</button>
+      </div>
+
+      <div class="scan-info-row">
+        <span class="scan-info-chip">📁 Up to 50 files scanned</span>
+        <span class="scan-info-chip">🔒 Read-only access</span>
+        <span class="scan-info-chip">⏱ ~2-5 min for 50 files</span>
+      </div>
+
+      <button class="btn-start-scan" [disabled]="!canScan" (click)="startScan()">
+        <span *ngIf="!isStarting()">🛡 Start Security Scan</span>
+        <span *ngIf="isStarting()" class="loading-text">
+          <span class="spinner"></span> Starting scan...
+        </span>
+      </button>
+    </div>
+
+    <!-- Mini info cards when connected -->
+    <div class="mini-coverage">
+      <div class="mc-title">What gets scanned</div>
+      <div class="mc-grid">
+        <span class="mc-chip scan">Java</span><span class="mc-chip scan">Python</span>
+        <span class="mc-chip scan">JavaScript</span><span class="mc-chip scan">TypeScript</span>
+        <span class="mc-chip scan">Go</span><span class="mc-chip scan">Rust</span>
+        <span class="mc-chip scan">C#</span><span class="mc-chip scan">C++</span>
+        <span class="mc-chip scan">Kotlin</span><span class="mc-chip scan">PHP</span>
+        <span class="mc-chip skip">node_modules ✕</span>
+        <span class="mc-chip skip">build/ ✕</span>
+        <span class="mc-chip skip">dist/ ✕</span>
+        <span class="mc-chip skip">vendor/ ✕</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HISTORY DRAWER ── -->
+  <div class="history-drawer" *ngIf="showHistory()">
+    <div class="drawer-loading" *ngIf="isLoadingHistory()">
+      <div class="loader-ring"></div> Loading scan history...
+    </div>
+    <div class="drawer-empty" *ngIf="!isLoadingHistory() && history().length === 0">
+      No scans yet
+    </div>
+    <div class="history-item" *ngFor="let item of history()" (click)="loadHistoryItem(item.id)">
+      <div class="hi-left">
+        <span class="hi-status-dot" [class]="item.status.toLowerCase()"></span>
+        <div>
+          <div class="hi-repo">{{ item.repoName }}</div>
+          <div class="hi-meta">{{ item.totalFiles }} files · {{ item.createdAt | date:'MMM d, h:mm a' }}</div>
+        </div>
+      </div>
+      <div class="hi-right">
+        <span class="sev-chip critical" *ngIf="item.criticalCount > 0">{{ item.criticalCount }} CRITICAL</span>
+        <span class="sev-chip high" *ngIf="item.highCount > 0">{{ item.highCount }} HIGH</span>
+        <span class="risk-score" *ngIf="item.overallRiskScore !== null" [class]="getRiskClass(item.overallRiskScore)">
+          {{ item.overallRiskScore }}/10
+        </span>
+        <button class="del-btn" (click)="deleteHistoryItem(item.id, $event)">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ACTIVE / COMPLETED SCAN ── -->
+  <div class="scan-result" *ngIf="currentScan() as scan">
+
+    <!-- Status bar -->
+    <div class="scan-status-bar" [class]="scan.status.toLowerCase()">
+      <div class="ssb-left">
+        <span class="ssb-icon" [class.spin]="isRunning">{{ getStatusIcon(scan.status) }}</span>
+        <div class="ssb-info">
+          <div class="ssb-repo">{{ scan.repoName }}</div>
+          <div class="ssb-detail">{{ getStatusLabel(scan.status) }}</div>
+        </div>
+      </div>
+      <div class="ssb-right">
+        <button class="btn-new-scan" (click)="resetScan()" *ngIf="!isRunning">+ New Scan</button>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" [class]="scan.status.toLowerCase()"
+          [style.width.%]="scan.progressPercent"></div>
+      </div>
+      <div class="progress-meta">
+        <span class="progress-label">{{ scan.progressPercent }}%</span>
+        <span class="progress-file" *ngIf="scan.currentFile">
+          Scanning: <code>{{ scan.currentFile }}</code>
+        </span>
+        <span class="progress-count" *ngIf="scan.totalFiles > 0">
+          {{ scan.processedFiles }} / {{ scan.totalFiles }} files
+        </span>
+      </div>
+    </div>
+
+    <!-- Processing steps visual -->
+    <div class="scan-steps" *ngIf="isRunning">
+      <div class="scan-step" [class.done]="scan.status !== 'PENDING'" [class.active]="scan.status === 'PENDING'">
+        <span class="ss-icon">○</span> Queued
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="scan-step" [class.done]="scan.status === 'SCANNING' || scan.status === 'COMPLETED'" [class.active]="scan.status === 'FETCHING'">
+        <span class="ss-icon" [class.pulse]="scan.status === 'FETCHING'">⬇</span> Fetching files
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="scan-step" [class.done]="scan.status === 'COMPLETED'" [class.active]="scan.status === 'SCANNING'">
+        <span class="ss-icon" [class.pulse]="scan.status === 'SCANNING'">◌</span>
+        Scanning {{ scan.processedFiles }}/{{ scan.totalFiles }}
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="scan-step" [class.active]="scan.status === 'COMPLETED'">
+        <span class="ss-icon">✓</span> Report ready
+      </div>
+    </div>
+
+    <!-- Error banner -->
+    <div class="error-banner" *ngIf="scan.status === 'FAILED'">
+      <span>⚠ {{ scan.errorMessage }}</span>
+    </div>
+
+    <!-- Tabs (only when complete) -->
+    <div class="result-tabs" *ngIf="scan.status === 'COMPLETED'">
+      <button class="rtab" [class.active]="activeTab() === 'report'" (click)="activeTab.set('report')">
+        🛡 Security Report
+        <span class="tab-badge danger" *ngIf="scan.criticalCount > 0">{{ scan.criticalCount }} critical</span>
+      </button>
+      <button class="rtab" [class.active]="activeTab() === 'history'" (click)="activeTab.set('history'); toggleHistory()">
+        ◎ History
+      </button>
+    </div>
+
+    <!-- ── SECURITY REPORT ── -->
+    <div class="report-panel" *ngIf="scan.status === 'COMPLETED' && activeTab() === 'report'">
+
+      <!-- Risk overview -->
+      <div class="risk-overview">
+        <!-- Risk gauge -->
+        <div class="risk-gauge-wrap">
+          <div class="risk-gauge" [class]="getRiskClass(scan.overallRiskScore)">
+            <div class="rg-inner">
+              <div class="rg-score">{{ scan.overallRiskScore }}</div>
+              <div class="rg-label">/ 10</div>
+            </div>
+          </div>
+          <div class="rg-caption" [class]="getRiskClass(scan.overallRiskScore)">
+            <span *ngIf="scan.overallRiskScore >= 7">🔴 Critical Risk</span>
+            <span *ngIf="scan.overallRiskScore >= 4 && scan.overallRiskScore < 7">🟠 High Risk</span>
+            <span *ngIf="scan.overallRiskScore >= 2 && scan.overallRiskScore < 4">🟡 Medium Risk</span>
+            <span *ngIf="scan.overallRiskScore < 2">🟢 Low Risk</span>
+          </div>
+        </div>
+
+        <!-- Severity counts -->
+        <div class="severity-counts">
+          <div class="sev-count critical">
+            <span class="sc-num">{{ scan.criticalCount }}</span>
+            <span class="sc-label">Critical</span>
+          </div>
+          <div class="sev-count high">
+            <span class="sc-num">{{ scan.highCount }}</span>
+            <span class="sc-label">High</span>
+          </div>
+          <div class="sev-count medium">
+            <span class="sc-num">{{ scan.mediumCount }}</span>
+            <span class="sc-label">Medium</span>
+          </div>
+          <div class="sev-count low">
+            <span class="sc-num">{{ scan.lowCount }}</span>
+            <span class="sc-label">Low</span>
+          </div>
+          <div class="sev-count total">
+            <span class="sc-num">{{ scan.findings?.length ?? 0 }}</span>
+            <span class="sc-label">Total</span>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="risk-summary">
+          <div class="rs-meta">
+            <span>{{ scan.repoName }}</span>
+            <span class="rs-sep">·</span>
+            <span>{{ scan.totalFiles }} files scanned</span>
+            <span class="rs-sep">·</span>
+            <span>Branch: {{ scan.branch }}</span>
+          </div>
+          <p class="rs-text">{{ scan.summary }}</p>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar" *ngIf="(scan.findings?.length ?? 0) > 0">
+        <span class="filter-label">Filter:</span>
+        <button class="filter-btn" [class.active]="severityFilter() === 'ALL'"
+          (click)="severityFilter.set('ALL')">All ({{ scan.findings?.length ?? 0 }})</button>
+        <button class="filter-btn critical" [class.active]="severityFilter() === 'CRITICAL'"
+          (click)="severityFilter.set('CRITICAL')" *ngIf="scan.criticalCount > 0">
+          Critical ({{ scan.criticalCount }})
+        </button>
+        <button class="filter-btn high" [class.active]="severityFilter() === 'HIGH'"
+          (click)="severityFilter.set('HIGH')" *ngIf="scan.highCount > 0">
+          High ({{ scan.highCount }})
+        </button>
+        <button class="filter-btn medium" [class.active]="severityFilter() === 'MEDIUM'"
+          (click)="severityFilter.set('MEDIUM')" *ngIf="scan.mediumCount > 0">
+          Medium ({{ scan.mediumCount }})
+        </button>
+        <button class="filter-btn low" [class.active]="severityFilter() === 'LOW'"
+          (click)="severityFilter.set('LOW')" *ngIf="scan.lowCount > 0">
+          Low ({{ scan.lowCount }})
+        </button>
+      </div>
+
+      <!-- No findings -->
+      <div class="no-findings" *ngIf="(scan.findings?.length ?? 0) === 0">
+        <span class="nf-icon">✅</span>
+        <div class="nf-title">No vulnerabilities found</div>
+        <div class="nf-sub">No security issues were detected in the scanned files.</div>
+      </div>
+
+      <!-- Findings list -->
+      <div class="findings-list" *ngIf="(filteredFindings.length) > 0">
+        <div class="finding-card" *ngFor="let f of filteredFindings; let i = index"
+          [class]="f.severity.toLowerCase()">
+          <div class="fc-header" (click)="toggleFinding(i)">
+            <div class="fc-left">
+              <span class="fc-sev" [class]="f.severity.toLowerCase()">{{ f.severity }}</span>
+              <span class="fc-cwe" [title]="getCweLabel(f.cwe)">{{ f.cwe }}</span>
+              <span class="fc-type">{{ f.type.replace('_', ' ') }}</span>
+            </div>
+            <div class="fc-right">
+              <span class="fc-file">{{ f.file }}</span>
+              <span class="fc-line" *ngIf="f.line > 0">Line {{ f.line }}</span>
+              <span class="fc-toggle">{{ expandedFinding() === i ? '▲' : '▼' }}</span>
+            </div>
+          </div>
+
+          <div class="fc-body" *ngIf="expandedFinding() === i">
+            <div class="fc-desc">
+              <div class="fc-section-label">Description</div>
+              <p>{{ f.description }}</p>
+            </div>
+            <div class="fc-exploit" *ngIf="f.exploitScenario">
+              <div class="fc-section-label exploit">Exploit Scenario</div>
+              <p>{{ f.exploitScenario }}</p>
+            </div>
+            <div class="fc-fix" *ngIf="f.fix">
+              <div class="fc-section-label fix">Recommended Fix</div>
+              <p>{{ f.fix }}</p>
+            </div>
+            <div class="fc-snippet" *ngIf="f.fixedCodeSnippet">
+              <div class="fc-section-label code">Fixed Code</div>
+              <pre class="code-block"><code>{{ f.fixedCodeSnippet }}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

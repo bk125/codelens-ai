@@ -1,0 +1,194 @@
+.review-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.page-header {
+  margin-bottom: 1.75rem;
+  .header-content { border-left: 3px solid var(--accent); padding-left: 1.25rem; }
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.brand-hex {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--accent), #7c5cfc);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #000;
+  animation: hexPulse 3s ease-in-out infinite;
+}
+.brand-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.brand-ai { color: var(--accent); }
+
+@keyframes hexPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 245, 212, 0.4); }
+  50% { box-shadow: 0 0 20px 6px rgba(0, 245, 212, 0.15); }
+}
+
+.page-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.4rem;
+  .title-accent { color: var(--accent); }
+}
+.page-subtitle { color: var(--text-muted); font-size: 0.875rem; margin: 0; }
+
+/* Tab bar */
+.tab-bar {
+  display: flex; gap: 0.5rem; margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.6rem 1.25rem; background: transparent;
+  border: none; border-bottom: 2px solid transparent;
+  color: var(--text-muted); font-family: 'Space Mono', monospace;
+  font-size: 0.85rem; cursor: pointer; transition: all 0.2s; margin-bottom: -1px;
+  &:hover { color: var(--text-primary); }
+  &.active { color: var(--accent); border-bottom-color: var(--accent); }
+}
+.score-chip {
+  padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+  &.score-high { background: rgba(74,222,128,0.15);  color: var(--success); }
+  &.score-mid  { background: rgba(251,191,36,0.15);  color: var(--warning); }
+  &.score-low  { background: rgba(248,113,113,0.15); color: var(--danger); }
+}
+
+/* Editor panel */
+.editor-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+}
+
+.editor-toolbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1rem; background: var(--surface-raised);
+  border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+
+/* Mode toggle */
+.mode-toggle {
+  display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.mode-btn {
+  padding: 0.4rem 0.9rem; background: transparent; border: none;
+  color: var(--text-muted); font-size: 0.8rem;
+  font-family: 'Space Mono', monospace; cursor: pointer; transition: all 0.2s;
+  &:first-child { border-right: 1px solid var(--border); }
+  &.active { background: var(--accent); color: #000; font-weight: 700; }
+  &:not(.active):hover { background: var(--surface); color: var(--text-primary); }
+}
+
+/* Detected language chip — shown only after review */
+.detected-chip {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.3rem 0.85rem;
+  background: rgba(var(--accent-rgb), 0.08);
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
+  border-radius: 20px;
+  font-size: 0.75rem; color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  strong { color: var(--accent); }
+}
+.detect-dot {
+  width: 6px; height: 6px; background: var(--accent);
+  border-radius: 50%; flex-shrink: 0;
+}
+
+.toolbar-right { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
+.char-count {
+  font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--text-muted);
+  &.warn { color: var(--warning); }
+}
+.btn-ghost {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-muted); padding: 0.35rem 0.75rem;
+  border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+  &:hover { border-color: var(--danger); color: var(--danger); }
+}
+
+/* Monaco area */
+.monaco-area { width: 100%; }
+
+/* File upload */
+.file-upload-area {
+  padding: 1rem; display: flex; flex-direction: column; gap: 1rem;
+}
+.file-preview {
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.file-preview-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 1rem; background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+}
+.file-name-badge {
+  font-family: 'Space Mono', monospace; font-size: 0.8rem;
+  color: var(--success); font-weight: 700;
+}
+.file-hint {
+  font-size: 0.72rem; color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+}
+
+/* Error banner */
+.error-banner {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin: 0 1rem; padding: 0.75rem 1rem;
+  background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+  border-radius: 8px; color: var(--danger); font-size: 0.875rem;
+  .error-close {
+    margin-left: auto; background: none; border: none;
+    color: inherit; cursor: pointer;
+  }
+}
+
+/* Submit row */
+.submit-row {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 1rem; padding: 1rem; border-top: 1px solid var(--border);
+}
+.submit-hint {
+  color: var(--text-disabled); font-size: 0.82rem;
+  font-family: 'Space Mono', monospace;
+}
+.btn-submit {
+  padding: 0.75rem 2rem; background: var(--accent); color: #000;
+  border: none; border-radius: 8px; font-family: 'Space Mono', monospace;
+  font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; min-width: 200px;
+  &:hover:not(:disabled) {
+    background: var(--accent-hover); transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.4);
+  }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+.loading-text {
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+}
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(0,0,0,0.3); border-top-color: #000;
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.result-panel { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

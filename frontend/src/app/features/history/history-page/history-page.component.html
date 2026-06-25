@@ -1,0 +1,197 @@
+<div class="history-page">
+
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title"><span class="title-accent">Review</span> History</h1>
+      <p class="page-subtitle">
+        Welcome back, <strong>{{ authService.currentUser()?.name }}</strong>
+      </p>
+    </div>
+    <button class="btn-new" (click)="goToReview()">+ New Review</button>
+  </div>
+
+  <div class="stats-bar" *ngIf="stats()">
+    <div class="stat-card">
+      <span class="stat-value">{{ stats()!.totalReviews }}</span>
+      <span class="stat-label">Total Reviews</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ stats()!.averageScore | number:'1.1-1' }}</span>
+      <span class="stat-label">Avg Score</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value user-name-val">{{ authService.currentUser()?.name }}</span>
+      <span class="stat-label">Reviewer</span>
+    </div>
+  </div>
+
+  <div class="error-banner" *ngIf="error()">
+    <span>&#9888; {{ error() }}</span>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading()">
+    <div class="loader-ring"></div>
+    <span>Loading history...</span>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading() && !error() && history().length === 0">
+    <div class="empty-icon">&#x25CE;</div>
+    <h3>No reviews yet</h3>
+    <p>Submit your first code review to see it here</p>
+    <button class="btn-new" (click)="goToReview()">Start Reviewing</button>
+  </div>
+
+  <div class="content-layout" [class.maximized]="isMaximized()" *ngIf="!isLoading() && history().length > 0">
+
+    <!-- History List -->
+    <div class="history-list">
+      <div
+        class="history-card"
+        *ngFor="let item of history(); trackBy: trackById"
+        [class.active]="selectedReview()?.id === item.id"
+        [class.deleting]="deletingId() === item.id"
+        (click)="openReview(item.id)">
+
+        <div class="card-left">
+          <div class="lang-badge">
+            <span class="lang-icon">{{ getLangIcon(item.language) }}</span>
+            <span class="lang-name">{{ item.language | uppercase }}</span>
+          </div>
+          <div class="card-body">
+            <h4 class="card-title">{{ item.title || '(Untitled)' }}</h4>
+            <p class="card-summary">{{ item.summary }}</p>
+            <span class="card-date">{{ item.createdAt | date:'MMM d, yyyy · h:mm a' }}</span>
+          </div>
+        </div>
+
+        <div class="card-right">
+          <div class="score-badge" [class]="'score-' + getScoreClass(item.score)">
+            <span class="badge-score">{{ item.score }}</span>
+            <span class="badge-label">/10</span>
+          </div>
+          <button class="delete-btn"
+            (click)="deleteReview(item.id, $event)"
+            [disabled]="deletingId() === item.id">
+            {{ deletingId() === item.id ? '...' : 'X' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" [class.maximized]="isMaximized()" *ngIf="selectedReview() || isLoadingDetail()">
+
+      <div class="detail-loading" *ngIf="isLoadingDetail()">
+        <div class="loader-ring"></div>
+        <span>Loading review...</span>
+      </div>
+
+      <ng-container *ngIf="selectedReview() as review">
+
+        <div class="detail-header">
+          <div class="detail-title-row">
+            <h3 class="detail-title">{{ review.title }}</h3>
+            <div class="header-actions">
+              <button class="action-btn" (click)="toggleMaximize()" title="Toggle Maximize">
+                {{ isMaximized() ? '❐ Restore' : '🗖 Maximize' }}
+              </button>
+              <button class="close-btn" (click)="closeDetail()">&#x2715;</button>
+            </div>
+          </div>
+          <div class="detail-meta">
+            <span class="meta-tag lang-tag">{{ review.language | uppercase }}</span>
+            <span class="meta-tag">{{ review.createdAt | date:'MMM d, yyyy' }}</span>
+            <span class="score-chip" [class]="'score-' + getScoreClass(review.score)">
+              {{ review.score }}/10
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-summary">{{ review.summary }}</div>
+
+        <div class="mini-stats">
+          <div class="mini-stat critical"><span>{{ review.issues?.length || 0 }}</span>Issues</div>
+          <div class="mini-stat improvement"><span>{{ review.improvements?.length || 0 }}</span>Improvements</div>
+          <div class="mini-stat practice"><span>{{ review.best_practices?.length || 0 }}</span>Best Practices</div>
+        </div>
+
+        <!-- Issues -->
+        <div class="detail-section" *ngIf="review.issues?.length">
+          <h4 class="section-title">&#9873; Issues</h4>
+          <div class="issue-item" *ngFor="let issue of review.issues" [class]="'sev-' + issue.severity">
+            <span class="sev-badge">{{ getSeverityIcon(issue.severity) }}</span>
+            <div>
+              <span class="issue-line" *ngIf="issue.line > 0">Line {{ issue.line }} — </span>
+              <span class="issue-text">{{ issue.problem }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Improvements -->
+        <div class="detail-section" *ngIf="review.improvements?.length">
+          <h4 class="section-title">&#8593; Improvements</h4>
+          <ul class="detail-list">
+            <li *ngFor="let item of review.improvements">{{ item }}</li>
+          </ul>
+        </div>
+
+        <!-- Best Practices -->
+        <div class="detail-section" *ngIf="review.best_practices?.length">
+          <h4 class="section-title">&#9672; Best Practices</h4>
+          <ul class="detail-list">
+            <li *ngFor="let item of review.best_practices">{{ item }}</li>
+          </ul>
+        </div>
+
+        <!-- Code section (plain pre, not Monaco to keep detail panel light) -->
+        <div class="detail-section" *ngIf="review.optimized_code">
+          <div class="code-header">
+            <h4 class="section-title" style="margin:0">Code</h4>
+            <div class="view-tabs">
+              <button class="view-tab" [class.active]="viewMode() === 'diff'"
+                (click)="viewMode.set('diff')">&#x25A7; Diff</button>
+              <button class="view-tab" [class.active]="viewMode() === 'original'"
+                (click)="viewMode.set('original')">Original</button>
+              <button class="view-tab" [class.active]="viewMode() === 'optimized'"
+                (click)="viewMode.set('optimized')">&#x2726; Optimized</button>
+            </div>
+            <button class="copy-btn" (click)="copyOptimized()">
+              <span *ngIf="copiedField() !== 'code'">Copy</span>
+              <span *ngIf="copiedField() === 'code'">Copied!</span>
+            </button>
+          </div>
+
+          <!-- Diff note -->
+          <div class="diff-note" *ngIf="viewMode() === 'diff'">
+            <span class="dot red"></span> Removed &nbsp;
+            <span class="dot green"></span> Added
+          </div>
+
+          <!-- Code display (plain pre for history panel, keeps it fast) -->
+          <pre class="code-block" *ngIf="viewMode() === 'original'"><code>{{ review.originalCode }}</code></pre>
+          <pre class="code-block" *ngIf="viewMode() === 'optimized'"><code>{{ review.optimized_code }}</code></pre>
+
+          <!-- Inline diff for history (text-based, lightweight) -->
+          <div class="inline-diff" *ngIf="viewMode() === 'diff'">
+            <div class="diff-col">
+              <div class="diff-col-header"><span class="dot red"></span> Original</div>
+              <pre class="code-block diff-original"><code>{{ review.originalCode }}</code></pre>
+            </div>
+            <div class="diff-col">
+              <div class="diff-col-header"><span class="dot green"></span> Optimized</div>
+              <pre class="code-block diff-optimized"><code>{{ review.optimized_code }}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn-rereview" (click)="reReviewSelected()">
+            &#x21BA; Re-Review in Editor
+          </button>
+        </div>
+
+      </ng-container>
+    </div>
+
+  </div>
+</div>

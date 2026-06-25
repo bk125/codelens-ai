@@ -1,0 +1,107 @@
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  cursor: default;
+  transition: all 0.2s ease;
+  min-height: 90px;
+  text-align: center;
+
+  &.dragging {
+    border-color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.06);
+    transform: scale(1.01);
+  }
+
+  &.loaded {
+    border-style: solid;
+    border-color: var(--success);
+    background: rgba(74, 222, 128, 0.05);
+  }
+
+  &.has-error {
+    border-style: solid;
+    border-color: var(--danger);
+    background: rgba(248, 113, 113, 0.05);
+  }
+}
+
+.upload-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  &.success    { color: var(--success); }
+  &.error-icon { color: var(--danger); }
+}
+
+.upload-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.upload-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  &.loaded { color: var(--success); font-family: 'Space Mono', monospace; font-size: 0.8rem; }
+  &.error-text { color: var(--danger); font-size: 0.82rem; max-width: 340px; }
+}
+
+.upload-sub {
+  font-size: 0.72rem;
+  color: var(--text-disabled);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.02em;
+}
+
+.upload-label {
+  font-size: 0.875rem;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.8; }
+}
+
+.hidden-input {
+  display: none;
+}
+
+.clear-btn {
+  padding: 0.25rem 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 6px;
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-family: 'Space Mono', monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: rgba(248, 113, 113, 0.1); }
+}
+
+.spinner-sm {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.upload-sub.muted {
+  color: var(--accent);
+  opacity: 0.7;
+  font-size: 0.68rem;
+}

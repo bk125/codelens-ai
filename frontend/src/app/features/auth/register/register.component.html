@@ -1,0 +1,50 @@
+<div class="auth-page">
+
+  <button class="theme-toggle-corner" (click)="themeService.toggle()"
+    [title]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'">
+    <span *ngIf="themeService.isDark()">&#9728;</span>
+    <span *ngIf="!themeService.isDark()">&#9790;</span>
+  </button>
+
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-hex">CL</div>
+      <span class="brand-text">CodeLens <span class="brand-ai">AI</span></span>
+    </div>
+    <h2 class="auth-title">Create account</h2>
+    <p class="auth-sub">Start reviewing code with AI</p>
+    <div class="error-banner" *ngIf="error()">
+      <span>&#9888; {{ error() }}</span>
+    </div>
+    <form class="auth-form" (ngSubmit)="submit()">
+      <div class="field">
+        <label class="field-label">Full Name</label>
+        <input class="field-input" type="text" [(ngModel)]="name" name="name"
+          placeholder="Brijesh Kumar" autocomplete="name" required />
+      </div>
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input class="field-input" type="email" [(ngModel)]="email" name="email"
+          placeholder="you@example.com" autocomplete="email" required />
+      </div>
+      <div class="field">
+        <label class="field-label">Password</label>
+        <div class="input-wrapper">
+          <input [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password" name="password"
+            class="field-input"
+            placeholder="Min. 8 chars, 1 letter, 1 number, 1 special"
+            autocomplete="new-password" required />
+          <button class="view-password-btn" (click)="togglePasswordVisibility()" type="button">
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
+      </div>
+      <button class="btn-submit" type="submit" [disabled]="isLoading() || !name || !email || !password">
+        <span *ngIf="!isLoading()">Create Account</span>
+        <span *ngIf="isLoading()" class="loading-text"><span class="spinner"></span> Creating...</span>
+      </button>
+    </form>
+    <p class="auth-footer">Already have an account? <a routerLink="/login" class="auth-link">Sign in</a></p>
+  </div>
+</div>

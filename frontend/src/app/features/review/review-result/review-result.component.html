@@ -1,0 +1,157 @@
+<div class="result-container">
+
+  <!-- Score Hero -->
+  <div class="score-hero">
+    <div class="score-left">
+      <div class="score-ring" [class]="'ring-' + scoreClass">
+        <svg viewBox="0 0 80 80" class="ring-svg">
+          <circle cx="40" cy="40" r="34" class="ring-bg" />
+          <circle cx="40" cy="40" r="34" class="ring-fill"
+            [style.stroke-dasharray]="'213.6'"
+            [style.stroke-dashoffset]="213.6 - (213.6 * scorePercent / 100)" />
+        </svg>
+        <div class="score-inner">
+          <span class="score-number">{{ review.score }}</span>
+          <span class="score-denom">/10</span>
+        </div>
+      </div>
+      <div class="score-info">
+        <h2 class="score-label" [class]="'label-' + scoreClass">{{ scoreLabel }}</h2>
+        <p class="score-summary">{{ review.summary }}</p>
+        <div class="score-meta">
+          <span class="meta-tag lang-tag">{{ review.language | uppercase }}</span>
+          <span class="meta-tag">{{ review.createdAt | date:'MMM d, h:mm a' }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="issue-stats">
+      <div class="issue-stat critical">
+        <span class="stat-count">{{ issuesCount }}</span>
+        <span class="stat-label">Issues</span>
+      </div>
+      <div class="issue-stat improvement">
+        <span class="stat-count">{{ improvementsCount }}</span>
+        <span class="stat-label">Improvements</span>
+      </div>
+      <div class="issue-stat practice">
+        <span class="stat-count">{{ bestPracticesCount }}</span>
+        <span class="stat-label">Best Practices</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="result-grid">
+
+    <!-- Issues -->
+    <section class="result-card" *ngIf="review.issues?.length">
+      <div class="card-header">
+        <span class="card-icon">&#9873;</span>
+        <h3 class="card-title">Issues Found</h3>
+        <span class="card-count">{{ review.issues.length }}</span>
+      </div>
+      <div class="issues-list">
+        <div class="issue-item" [class]="'sev-' + (issue.severity?.toLowerCase() || 'info')" *ngFor="let issue of review.issues">
+          <div class="issue-sev">
+            <span class="sev-icon">{{ getSeverityIcon(issue.severity) }}</span>
+            <span class="sev-label">{{ issue.severity }}</span>
+          </div>
+          <div class="issue-body">
+            <span class="issue-line" *ngIf="issue.line > 0">Line {{ issue.line }}</span>
+            <p class="issue-problem">{{ issue.problem }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Improvements -->
+    <section class="result-card" *ngIf="review.improvements?.length">
+      <div class="card-header">
+        <span class="card-icon">&#8593;</span>
+        <h3 class="card-title">Improvements</h3>
+        <span class="card-count">{{ review.improvements.length }}</span>
+      </div>
+      <ul class="bullet-list">
+        <li *ngFor="let item of review.improvements" class="bullet-item">
+          <span class="bullet-dot">&#x203A;</span>
+          <span>{{ item }}</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Best Practices -->
+    <section class="result-card" *ngIf="review.best_practices?.length">
+      <div class="card-header">
+        <span class="card-icon">&#9672;</span>
+        <h3 class="card-title">Best Practices</h3>
+        <span class="card-count">{{ review.best_practices.length }}</span>
+      </div>
+      <ul class="bullet-list">
+        <li *ngFor="let item of review.best_practices" class="bullet-item">
+          <span class="bullet-dot">&#x203A;</span>
+          <span>{{ item }}</span>
+        </li>
+      </ul>
+    </section>
+
+  </div>
+
+  <!-- Code Section -->
+  <section class="result-card code-section" *ngIf="review.optimized_code">
+    <div class="card-header">
+      <h3 class="card-title">Code</h3>
+
+      <!-- View Mode Switcher -->
+      <div class="view-tabs">
+        <button class="view-tab" [class.active]="viewMode() === 'diff'"
+          (click)="viewMode.set('diff')" title="Side-by-side diff">
+          &#x25A7; Diff
+        </button>
+        <button class="view-tab" [class.active]="viewMode() === 'original'"
+          (click)="viewMode.set('original')" title="Original code">
+          Original
+        </button>
+        <button class="view-tab" [class.active]="viewMode() === 'optimized'"
+          (click)="viewMode.set('optimized')" title="Optimized code">
+          &#x2726; Optimized
+        </button>
+      </div>
+
+      <button class="copy-btn" (click)="copyOptimized()">
+        <span *ngIf="copiedField() !== 'all'">&#x29C9; Copy Optimized</span>
+        <span *ngIf="copiedField() === 'all'">&#x2713; Copied!</span>
+      </button>
+    </div>
+
+    <!-- Diff View -->
+    <div class="code-view" *ngIf="viewMode() === 'diff'">
+      <app-diff-viewer
+        [original]="review.originalCode"
+        [modified]="review.optimized_code"
+        [language]="monacoLang">
+      </app-diff-viewer>
+    </div>
+
+    <!-- Single file view (Original or Optimized) -->
+    <div class="code-view" *ngIf="viewMode() !== 'diff'">
+      <app-monaco-editor
+        [value]="viewMode() === 'original' ? review.originalCode : review.optimized_code"
+        [language]="monacoLang"
+        [readOnly]="true"
+        height="460px">
+      </app-monaco-editor>
+    </div>
+  </section>
+
+  <!-- Actions -->
+  <div class="result-actions">
+    <button class="btn-rereview" (click)="triggerReReview()">
+      &#x21BA; Edit Optimized &amp; Re-Review
+    </button>
+    <button class="btn-copy-all" (click)="copyOptimized()">
+      <span *ngIf="copiedField() !== 'all'">&#x29C9; Copy Optimized Code</span>
+      <span *ngIf="copiedField() === 'all'">&#x2713; Copied!</span>
+    </button>
+  </div>
+
+</div>

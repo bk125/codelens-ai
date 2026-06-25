@@ -1,0 +1,117 @@
+<div class="review-page">
+
+  <div class="page-header">
+    <div class="header-content">
+      <div class="auth-brand">
+        <div class="brand-hex">CL</div>
+        <span class="brand-text">CodeLens <span class="brand-ai">AI</span></span>
+      </div>
+      <p class="page-subtitle">Paste your code or upload a file — AI detects the language automatically</p>
+    </div>
+  </div>
+
+  <!-- Result / Editor tab bar -->
+  <div class="tab-bar" *ngIf="result()">
+    <button class="tab-btn" [class.active]="activeTab() === 'editor'" (click)="activeTab.set('editor')">
+      &#x25C8; Editor
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'result'" (click)="activeTab.set('result')">
+      &#x25CE; Review Result
+      <span class="score-chip" [class]="'score-' + getScoreClass(result()!.score)">
+        {{ result()!.score }}/10
+      </span>
+    </button>
+  </div>
+
+  <!-- Editor Panel -->
+  <div class="editor-panel" *ngIf="activeTab() === 'editor'">
+
+    <div class="editor-toolbar">
+
+      <!-- Input mode toggle -->
+      <div class="mode-toggle">
+        <button class="mode-btn" [class.active]="inputMode() === 'editor'" (click)="switchMode('editor')">
+          &#x270E; Type / Paste
+        </button>
+        <button class="mode-btn" [class.active]="inputMode() === 'file'" (click)="switchMode('file')">
+          &#x1F4C2; Upload File
+        </button>
+      </div>
+
+      <!-- Detected language chip shown only after review -->
+      <div class="detected-chip" *ngIf="result()">
+        <span class="detect-dot"></span>
+        Detected: <strong>{{ result()!.language }}</strong>
+      </div>
+
+      <div class="toolbar-right">
+        <span class="char-count" [class.warn]="charCount() > 40000">
+          {{ charCount() }} / 50,000
+        </span>
+        <button class="btn-ghost" (click)="clearAll()" *ngIf="code()">
+          &#x2715; Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Monaco Editor (type / paste mode) -->
+    <div class="monaco-area" *ngIf="inputMode() === 'editor'">
+      <app-monaco-editor
+        [value]="code()"
+        [language]="monacoLang()"
+        [readOnly]="false"
+        height="460px"
+        (valueChange)="onCodeChange($event)">
+      </app-monaco-editor>
+    </div>
+
+    <!-- File Upload Zone -->
+    <div class="file-upload-area" *ngIf="inputMode() === 'file'">
+      <app-file-upload
+        (fileLoaded)="onFileLoaded($event)"
+        (uploadError)="onFileError($event)">
+      </app-file-upload>
+
+      <!-- Read-only preview after file loaded -->
+      <div class="file-preview" *ngIf="code() && loadedFileName()">
+        <div class="file-preview-header">
+          <span class="file-name-badge">&#x1F4C4; {{ loadedFileName() }}</span>
+          <span class="file-hint">AI will detect the language</span>
+        </div>
+        <app-monaco-editor
+          [value]="code()"
+          [language]="monacoLang()"
+          [readOnly]="true"
+          height="340px">
+        </app-monaco-editor>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-banner" *ngIf="error()">
+      <span>&#9888; {{ error() }}</span>
+      <button class="error-close" (click)="error.set(null)">&#x2715;</button>
+    </div>
+
+    <!-- Submit Row -->
+    <div class="submit-row">
+      <div class="submit-hint" *ngIf="!code().trim()">
+        <span *ngIf="inputMode() === 'editor'">&#8593; Paste any code above — language is auto-detected</span>
+        <span *ngIf="inputMode() === 'file'">&#8593; Upload a file to get started</span>
+      </div>
+      <button class="btn-submit" [disabled]="!canSubmit()" (click)="submitReview()">
+        <span *ngIf="!isLoading()">&#x25C8; Analyze Code</span>
+        <span *ngIf="isLoading()" class="loading-text">
+          <span class="spinner"></span> Analyzing...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Result Panel -->
+  <div class="result-panel" *ngIf="activeTab() === 'result' && result()">
+    <app-review-result [review]="result()!" (reReview)="onReReview($event)">
+    </app-review-result>
+  </div>
+
+</div>

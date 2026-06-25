@@ -1,0 +1,25 @@
+<div class="verify-container">
+  <div class="verify-card">
+    <h2>Verify Your Email</h2>
+    <p>A 6-digit verification code has been sent to <strong>{{ email }}</strong></p>
+
+    <form [formGroup]="verifyForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="code">Verification Code</label>
+        <input
+          type="text"
+          id="code"
+          formControlName="code"
+          placeholder="123456"
+          maxlength="6"
+        />
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" [disabled]="verifyForm.invalid">Verify Now</button>
+    </form>
+  </div>
+</div>

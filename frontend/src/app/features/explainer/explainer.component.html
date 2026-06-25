@@ -1,0 +1,190 @@
+<div class="explainer-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title"><span class="title-accent">Code</span> Explainer</h1>
+      <p class="page-subtitle">Paste any code — AI explains what it does, how it works, and why</p>
+    </div>
+    <button class="btn-history" (click)="toggleHistory()">
+      &#x25CE; {{ showHistory() ? 'Hide' : 'History' }}
+    </button>
+  </div>
+
+  <!-- History Drawer -->
+  <div class="history-drawer" *ngIf="showHistory()">
+    <div class="drawer-loading" *ngIf="isLoadingHistory()">
+      <div class="loader-ring"></div> Loading...
+    </div>
+    <div class="drawer-empty" *ngIf="!isLoadingHistory() && history().length === 0">
+      No explanations yet
+    </div>
+    <div class="history-item" *ngFor="let item of history()" (click)="openHistoryItem(item.id)">
+      <div class="hist-top">
+        <span class="lang-chip">{{ item.language }}</span>
+        <span class="hist-date">{{ item.createdAt | date:'MMM d, h:mm a' }}</span>
+        <button class="del-btn" (click)="deleteHistoryItem(item.id, $event)">&#x2715;</button>
+      </div>
+      <p class="hist-overview">{{ item.overview }}</p>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-panel">
+    <div class="panel-header">
+      <div class="panel-title">Your Code</div>
+      <div class="mode-toggle">
+        <button class="mode-btn" [class.active]="inputMode() === 'editor'" (click)="switchInputMode('editor')">
+          &#x270E; Paste
+        </button>
+        <button class="mode-btn" [class.active]="inputMode() === 'file'" (click)="switchInputMode('file')">
+          &#x1F4C2; File
+        </button>
+      </div>
+      <!-- Language detected after result -->
+      <div class="detected-chip" *ngIf="result()">
+        <span class="detect-dot"></span>
+        Detected: <strong>{{ result()!.language }}</strong>
+      </div>
+      <div class="toolbar-right">
+        <span class="char-count" [class.warn]="charCount() > 40000">{{ charCount() }} / 50k</span>
+        <button class="btn-ghost" (click)="clearAll()" *ngIf="code()">&#x2715; Clear</button>
+      </div>
+    </div>
+
+    <!-- Monaco Editor -->
+    <div *ngIf="inputMode() === 'editor'">
+      <app-monaco-editor
+        [value]="code()"
+        [language]="monacoLang()"
+        [readOnly]="false"
+        height="400px"
+        (valueChange)="onCodeChange($event)">
+      </app-monaco-editor>
+    </div>
+
+    <!-- File Upload -->
+    <div class="file-area" *ngIf="inputMode() === 'file'">
+      <app-file-upload
+        (fileLoaded)="onFileLoaded($event)"
+        (uploadError)="onFileError($event)">
+      </app-file-upload>
+      <div class="file-preview" *ngIf="code() && loadedFileName()">
+        <div class="file-badge">&#x1F4C4; {{ loadedFileName() }}</div>
+        <app-monaco-editor [value]="code()" [language]="monacoLang()" [readOnly]="true" height="280px">
+        </app-monaco-editor>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-banner" *ngIf="error()">
+      <span>&#9888; {{ error() }}</span>
+      <button (click)="error.set(null)">&#x2715;</button>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-row">
+      <div class="submit-hint" *ngIf="!code().trim()">
+        &#8593; Paste any code — language is auto-detected
+      </div>
+      <button class="btn-explain" [disabled]="!canExplain()" (click)="explain()">
+        <span *ngIf="!isLoading()">&#x1F4A1; Explain Code</span>
+        <span *ngIf="isLoading()" class="loading-text">
+          <span class="spinner"></span> Analyzing...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-area" *ngIf="result() as res">
+
+    <!-- Overview -->
+    <div class="result-card overview-card">
+      <div class="card-header">
+        <span class="card-icon">&#x1F4CB;</span>
+        <h3 class="card-title">Overview</h3>
+        <span class="lang-badge">{{ res.language }}</span>
+        <button class="copy-btn" (click)="copyOverview()">
+          <span *ngIf="copiedField() !== 'overview'">&#x29C9; Copy</span>
+          <span *ngIf="copiedField() === 'overview'">&#x2713; Copied!</span>
+        </button>
+      </div>
+      <p class="overview-text">{{ res.overview }}</p>
+    </div>
+
+    <!-- How it Works -->
+    <div class="result-card">
+      <div class="card-header">
+        <span class="card-icon">&#x2699;</span>
+        <h3 class="card-title">How It Works</h3>
+      </div>
+      <p class="how-text">{{ res.howItWorks }}</p>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="result-grid">
+
+      <!-- Functions Breakdown -->
+      <div class="result-card" *ngIf="res.functions?.length">
+        <div class="card-header">
+          <span class="card-icon">&#x192;</span>
+          <h3 class="card-title">Functions / Methods</h3>
+          <span class="card-count">{{ res.functions.length }}</span>
+        </div>
+        <div class="fn-list">
+          <div class="fn-item" *ngFor="let fn of res.functions">
+            <div class="fn-name">{{ fn.name }}</div>
+            <p class="fn-purpose">{{ fn.purpose }}</p>
+            <div class="fn-meta" *ngIf="fn.parameters && fn.parameters !== 'none'">
+              <span class="fn-label">Params:</span> {{ fn.parameters }}
+            </div>
+            <div class="fn-meta" *ngIf="fn.returns && fn.returns !== 'void'">
+              <span class="fn-label">Returns:</span> {{ fn.returns }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div class="right-col">
+
+        <!-- Complexity -->
+        <div class="result-card" *ngIf="res.complexity">
+          <div class="card-header">
+            <span class="card-icon">&#x23F1;</span>
+            <h3 class="card-title">Complexity</h3>
+          </div>
+          <p class="complexity-text">{{ res.complexity }}</p>
+        </div>
+
+        <!-- Key Concepts -->
+        <div class="result-card" *ngIf="res.keyConcepts?.length">
+          <div class="card-header">
+            <span class="card-icon">&#x1F9E9;</span>
+            <h3 class="card-title">Key Concepts</h3>
+          </div>
+          <div class="concept-tags">
+            <span class="concept-tag" *ngFor="let c of res.keyConcepts">{{ c }}</span>
+          </div>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="result-card" *ngIf="res.useCases?.length">
+          <div class="card-header">
+            <span class="card-icon">&#x1F3AF;</span>
+            <h3 class="card-title">Use Cases</h3>
+          </div>
+          <ul class="use-cases-list">
+            <li *ngFor="let uc of res.useCases">
+              <span class="bullet">&#x203A;</span> {{ uc }}
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>

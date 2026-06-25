@@ -1,0 +1,45 @@
+<div class="upload-zone"
+  [class.dragging]="isDragging()"
+  [class.loaded]="loadedFile()"
+  [class.has-error]="error()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)">
+
+  <!-- Reading -->
+  <ng-container *ngIf="isReading()">
+    <div class="spinner-sm"></div>
+    <span class="upload-text">Reading file...</span>
+  </ng-container>
+
+  <!-- Loaded -->
+  <ng-container *ngIf="!isReading() && loadedFile()">
+    <span class="upload-icon success">&#x2713;</span>
+    <span class="upload-text loaded">{{ loadedFile() }}</span>
+    <button class="clear-btn" (click)="clear()">&#x2715; Remove</button>
+  </ng-container>
+
+  <!-- Error -->
+  <ng-container *ngIf="!isReading() && !loadedFile() && error()">
+    <span class="upload-icon error-icon">&#x26A0;</span>
+    <span class="upload-text error-text">{{ error() }}</span>
+    <label class="upload-label">
+      Try again
+      <input type="file" class="hidden-input" (change)="onFileSelected($event)" />
+    </label>
+  </ng-container>
+
+  <!-- Idle -->
+  <ng-container *ngIf="!isReading() && !loadedFile() && !error()">
+    <span class="upload-icon">&#x1F4C4;</span>
+    <div class="upload-hint">
+      <span class="upload-text">Drop a file here, or</span>
+      <label class="upload-label">
+        browse
+        <input type="file" class="hidden-input" (change)="onFileSelected($event)" />
+      </label>
+    </div>
+    <span class="upload-sub">{{ supportedExtensions }} &nbsp;&middot;&nbsp; Max 500 KB &nbsp;&middot;&nbsp; Single file only</span>
+  </ng-container>
+
+</div>
